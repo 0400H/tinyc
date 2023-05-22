@@ -15,7 +15,7 @@ build: $(OUT)
 test: $(TESTOUT)
 
 simulate: $(TESTOUT)
-	python pysim.py $<
+	./pysim.py $<
 
 clean:
 	rm -f *.o $(OUTFILES)

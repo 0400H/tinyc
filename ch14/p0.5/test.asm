@@ -1,6 +1,5 @@
 FUNC @main:
 var a, b, c, d
-
 push 2
 pop c
 
@@ -29,18 +28,13 @@ print "a = sum(c, d) = %d, b = sum(a, d) = %d"
 
 push 0
 ret ~
-
 ENDFUNC
 
 FUNC @sum:
 arg a, b
-
 var c, d
-
 push a
 push b
 add
 ret ~
-
 ENDFUNC
-

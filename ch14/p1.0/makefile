@@ -1,10 +1,10 @@
-OUT      = tcc
+OUT	  = tcc
 TESTFILE = test.c
 SCANNER  = scanner.l
 PARSER   = parser.y
 
-CC       = gcc
-OBJ      = lex.yy.o y.tab.o
+CC	   = gcc
+OBJ	  = lex.yy.o y.tab.o
 TESTOUT  = $(basename $(TESTFILE)).asm
 OUTFILES = lex.yy.c y.tab.c y.tab.h y.output $(OUT)
 
@@ -15,7 +15,7 @@ build: $(OUT)
 test: $(TESTOUT)
 
 simulate: $(TESTOUT)
-	python pysim.py $< -a
+	./pysim.py $< -a
 
 clean:
 	rm -f *.o $(OUTFILES)

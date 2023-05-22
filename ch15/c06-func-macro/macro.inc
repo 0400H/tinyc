@@ -200,7 +200,6 @@
 
 EXTERN PRINT, READINT
 GLOBAL _start
-
 [SECTION .TEXT]
 _start:
     CALL @main

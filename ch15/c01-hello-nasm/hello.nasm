@@ -7,7 +7,6 @@ _start:
     MOV ECX, msg
     MOV EDX, len
     INT 0x80            ; write(stdout, msg, len)
-
     MOV EAX, 1          ; exit
     MOV EBX, 0
     INT 0x80            ; exit(0)

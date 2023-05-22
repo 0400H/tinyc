@@ -168,7 +168,7 @@ Do:
 ;
 
 EndWhile:
-    /* empty */     { out_asm("\tjmp _begWhile_%d\n_endWhile_%d:", 
+    /* empty */     { out_asm("\tjmp _begWhile_%d\n_endWhile_%d:",
                                                 _w, _w); _END_WHILE; }
 ;
 

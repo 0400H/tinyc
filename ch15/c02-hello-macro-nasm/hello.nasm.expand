@@ -14,7 +14,7 @@ _start:
     MOV EDX, ..@1.LEN
     INT 0x80
 
-; print "Hello again" 
+; print "Hello again"
 [SECTION .DATA]
     ..@2.STRING: DB "Hello again!", 10
     ..@2.LEN: EQU $-..@2.STRING

@@ -1,5 +1,4 @@
 var a, b, c, d
-
 push 1
 push 2
 push 2
@@ -25,4 +24,3 @@ push b
 push c
 push d
 print "a = %d, b = %d, c = %d, d = %d"
-

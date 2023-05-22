@@ -1,4 +1,4 @@
-; int main() { 
+; int main() {
 FUNC @main:
     ; int a;
     main.var a

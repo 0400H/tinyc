@@ -3,18 +3,18 @@
 #include <stdarg.h>
 
 void print(char *format, ...) {
-	va_list args;
-	va_start(args, format);
+    va_list args;
+    va_start(args, format);
     vprintf(format, args);
     va_end(args);
     puts("");
 }
 
 int readint(char *prompt) {
-	int i;
-	printf(prompt);
-	scanf("%d", &i);
-	return i;
+    int i;
+    printf(prompt);
+    scanf("%d", &i);
+    return i;
 }
 
 #define auto

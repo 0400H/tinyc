@@ -52,7 +52,7 @@ STRING              (\042[^\042\n]*\042)
 
 %%
 
-int yywrap(void) { 
+int yywrap(void) {
     return 1;
 }
 

@@ -1,6 +1,6 @@
 CC = gcc
-OUT = tcc
-OBJ = lex.yy.o y.tab.o
+OUT = calc
+SRC = lex.yy.c y.tab.c
 SCANNER = scanner.l
 PARSER = parser.y
 
@@ -10,12 +10,12 @@ run: $(OUT)
 	./$(OUT) < test.c > test.asm
 
 clean:
-	rm -f *.o lex.yy.c y.tab.c y.tab.h y.output $(OUT)
+	rm -f *.o lex.yy.c y.tab.c y.tab.h y.output $(OUT) || true
 
-$(OUT): $(OBJ)
-	$(CC) -o $(OUT) $(OBJ)
+$(OUT): $(SRC)
+	$(CC) -o $(OUT) $(SRC)
 
-lex.yy.c: $(SCANNER) y.tab.c
+lex.yy.c: $(SCANNER)
 	flex $<
 
 y.tab.c: $(PARSER)

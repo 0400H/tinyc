@@ -8,7 +8,7 @@ typedef enum {
     T_ReadInt
 } TokenType;
 
-static void print_token(int token) {
+static void print_token(int token_type) {
     static char* token_strs[] = {
         "T_Le", "T_Ge", "T_Eq", "T_Ne", "T_And", "T_Or", "T_IntConstant",
         "T_StringConstant", "T_Identifier", "T_Void", "T_Int", "T_While",
@@ -16,10 +16,10 @@ static void print_token(int token) {
         "T_ReadInt"
     };
 
-    if (token < 256) {
-        printf("%-20c", token);
+    if (token_type < 256) {
+        printf("%-20c", token_type);
     } else {
-        printf("%-20s", token_strs[token-256]);
+        printf("%-20s", token_strs[token_type-256]);
     }
 }
 

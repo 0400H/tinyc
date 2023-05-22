@@ -1,0 +1,13 @@
+*.o
+*.a
+*.out
+*.lex
+y.*
+lex.*
+calc
+scanner
+hide-digits
+word-spliter
+*-c-build/
+release/
+build/

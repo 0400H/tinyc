@@ -203,6 +203,6 @@ GLOBAL _start
 
 [SECTION .TEXT]
 _start:
-	CALL @main
+    CALL @main
     PUSH EAX
-	exit [ESP]
+    exit [ESP]

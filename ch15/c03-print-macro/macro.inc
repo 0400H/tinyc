@@ -16,6 +16,5 @@
 
 EXTERN PRINT
 GLOBAL _start
-
 [SECTION .TEXT]
 _start:

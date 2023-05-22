@@ -17,6 +17,5 @@
 %ENDMACRO
 
 GLOBAL _start
-
 [SECTION .TEXT]
 _start:
