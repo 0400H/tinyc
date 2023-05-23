@@ -6,4 +6,4 @@ hello: hello.nasm
 	ld -m elf_i386 -o hello.out hello.o
 
 clean:
-	rm hello.o hello.out
+	rm *.o *.out || true

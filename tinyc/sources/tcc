@@ -19,7 +19,7 @@ objdir=$filename-$fileext-build
 
 $(dirname $0)/tcc-frontend $1
 nasm -f elf32 -P$tccdir/macro.inc -P$filename.inc -o $filename.o $filename.asm
-ld -m elf_i386 -o $filename $filename.o -L$tccdir -ltio
+ld -o $filename $filename.o -L$tccdir -ltio -m elf_i386 -N
 mkdir -p $objdir
 mv $filename.inc $filename.asm $filename.o $filename $objdir/
 cp $filename.c $objdir/

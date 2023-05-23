@@ -13,8 +13,3 @@
     MOV EBX, %1
     INT 0x80
 %ENDMACRO
-
-EXTERN PRINT
-GLOBAL _start
-[SECTION .TEXT]
-_start:
