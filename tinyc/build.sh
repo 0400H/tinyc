@@ -15,7 +15,7 @@ gcc -o tio.o ../sources/tio.c -c -m32 -march=x86-64 -O0 -fno-pie -fno-stack-prot
 ar -crv libtio.a tio.o > /dev/null
 # rm -f tio.o
 
-cp ../sources/{macro.inc,pysim.py,tcc,pysimulate} .
-chmod u+x tcc tcc-frontend pysimulate
+cp ../sources/{macro.inc,simulator.py,tcc} .
+chmod u+x tcc tcc-frontend simulator.py
 
 cd -
