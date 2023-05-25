@@ -16,6 +16,6 @@ ar -crv libtio.a tio.o > /dev/null
 # rm -f tio.o
 
 cp ../sources/{macro.inc,simulator.py,tcc} .
-chmod u+x tcc tcc-frontend simulator.py
+chmod +x tcc tcc-frontend simulator.py
 
 cd -

@@ -13,62 +13,155 @@ def read_file(file_path):
 
 
 class simulator(object):
-    def __init__(self):
-        self.xip = 0
+    def __init__(self, verbose):
+        self.verbose = verbose
+        # assemb
         self.code = []
-        self.stack = []
-        self.var_table = {}
+        self.comment_mark = ";%"
         self.label_table = {}
         self.func_table = {}
-        self.output = []
-        self.comment_mark = ";%"
+        # run
+        self.xip = 0
+        self.stack = []
+        self.var_table = {}
+        # tui display
         self.tui_enable = False
         self.tui_pause = False
         self.code_lines_num = 24
         self.output_lines_num = 8
+        self.output = []
+
+    def assemb(self, asm_file, add_main):
+        if not asm_file:
+            raise Exception("Wrong asm file path")
+
+        if add_main:
+            self.code.append(['', '$main', ''])
+            self.code.append(['', 'exit', '~'])
+
+        latest_code = None
+        code_lines = read_file(asm_file)
+        for line in code_lines:
+            line = line.strip()
+            if line == "" or line[0] in self.comment_mark:
+                continue
+
+            if ":" == line[-1]:            # for label and func dec
+                tag = line[:-1]
+                if latest_code:
+                    latest_code[0] += "," + tag
+                else:
+                    latest_code = self.new_code()
+                    latest_code[0] = tag
+                    if line[0] == "_":
+                        self.label_table[tag] = len(self.code)
+                    else:
+                        name = tag[tag.find("@")+1:]
+                        self.func_table[name] = len(self.code)
+            elif len("ENDFUNC") < len(line) and "ENDFUNC" == line[:len("ENDFUNC")]:
+                if latest_code:
+                    latest_code[0] += ",ENDFUNC"
+                else:
+                    latest_code = self.new_code()
+                    latest_code[0] = "ENDFUNC"
+                latest_code[1] = "ret"
+            else:                      # for op
+                if not latest_code:
+                    latest_code = self.new_code()
+                idx = line.find(" ")
+                if idx < 0:
+                    latest_code[1] = line
+                else:
+                    op, arg = line[:idx].strip(), line[idx:].strip()
+                    if '.arg' in op or '.var' in op:
+                        op = op[-3:]
+                    latest_code[1] = op
+                    latest_code[2] = arg
+
+            if self.append_code(latest_code):
+                latest_code = None
+                continue
+
+        self.code.append(["", "exit", "0"])
+        if self.verbose:
+            for line in self.code:
+                print(line)
+
+    def run(self, tui_mode):
+        if tui_mode:
+            self.tui_enable = True
+            if tui_mode > 1:
+                self.tui_pause = True
+
+        self.xip = 0
+        self.stack.clear()
+
+        while True:
+            self.display()
+            _, op, arg = self.code[self.xip]
+            if op[0] == '$':
+                op, arg = "call", op[1:]
+            try:
+                dialect = eval("self.do_" + op)
+                dialect(arg)
+            except NameError:
+                self.run_error("Unknown instruction: %s" % (op))
+            self.xip += 1
+        self.tui_enable = False
+
+    def display(self):
+        if self.tui_enable:
+            if os.system("clear"):
+                os.system('cls')
+            print("%32s%-40s|  %-10s  |  Bind Var" % ("", "Code", "Stack"))
+            stack_size = len(self.stack)
+            j = 0
+            for i in range(max(self.xip+1-self.code_lines_num, 0), \
+                           max(self.xip+1, self.code_lines_num) ):
+                label, line = "", ""
+                if i < len(self.code):
+                    label, op, arg = self.code[i]
+                    line = self.trim(op + " " + arg, 40)
+                    label = self.trim(label, 28) + ":"
+                point = " ->" if i == self.xip else ""
+                st = self.stack[j] if j < stack_size else ""
+                st = "(RetInfo)" if type(st) is tuple else str(st)
+                stvar = self.var_table.get(j, "")
+                if j == stack_size - 1:
+                    stvar += "<-"
+                print("%29s%3s%-40s|  %-10s  |  %s" % \
+                    (label, point, line, st, stvar))
+                j += 1
+            print("***Output***")
+            out_size = len(self.output)
+            for i in range(max(out_size-self.output_lines_num, 0), \
+                        max(out_size, self.output_lines_num) ):
+                print(self.output[i] if i < out_size else "")
+                if i == out_size and not self.tui_pause:
+                    break
+            if self.tui_pause:
+                if get_input("\npress enter to step, press r to run: ") == "r":
+                    self.tui_enable = False
+            else:
+                if self.tui_enable:
+                    # time.sleep(0.01)
+                    pass
+
+    def new_code(self):
+        return ["","",""]
+
+    def append_code(self, code):
+        if code and code[1]:
+            self.code.append(code)
+            return True
+        else:
+            return False
 
     def trim(self, s, size):
         if len(s) > size:
             return s[:size-3] + "..."
         else:
             return s
-
-    def display(self):
-        if os.system("clear"):
-            os.system('cls')
-        print("%32s%-40s|  %-10s  |  Bind Var" % ("", "Code", "Stack"))
-        stack_size = len(self.stack)
-        j = 0
-        for i in range(max(self.xip+1-self.code_lines_num, 0), \
-                       max(self.xip+1, self.code_lines_num) ):
-            label, line = "", ""
-            if i < len(self.code):
-                label, dire, arg = self.code[i]
-                line = self.trim(dire + " " + arg, 40)
-                label = self.trim(label, 28) + ":"
-            point = " ->" if i == self.xip else ""
-            st = self.stack[j] if j < stack_size else ""
-            st = "(RetInfo)" if type(st) is tuple else str(st)
-            stvar = self.var_table.get(j, "")
-            if j == stack_size - 1:
-                stvar += "<-"
-            print("%29s%3s%-40s|  %-10s  |  %s" % \
-                (label, point, line, st, stvar))
-            j += 1
-        print("***Output***")
-        out_size = len(self.output)
-        for i in range(max(out_size-self.output_lines_num, 0), \
-                       max(out_size, self.output_lines_num) ):
-            print(self.output[i] if i < out_size else "")
-            if i == out_size and not self.tui_pause:
-                break
-        if self.tui_pause:
-            if get_input("\npress enter to step, press r to run: ") == "r":
-                self.tui_enable = False
-        else:
-            if self.tui_enable:
-                # time.sleep(0.01)
-                pass
 
     def is_valid_identifier(self, ident):
         if ident == "":
@@ -83,131 +176,40 @@ class simulator(object):
     def table_has_key(self, table, key):
         return key in table
 
-    def check_label(self, label):
-        if label == "":
-            return False
-        func, sep, func_name = label.partition(' @')
-        if sep:
-            if func.strip() != 'FUNC' \
-                or not self.is_valid_identifier(func_name) \
-                or self.table_has_key(self.func_table, func_name):
-                return False
-            else:
-                self.func_table[func_name] = len(self.code)
-                return True
-        else:
-            if not self.is_valid_identifier(label) \
-                or self.table_has_key(self.func_table, label) \
-                or self.table_has_key(self.label_table, label):
-                return False
-            else:
-                self.label_table[label] = len(self.code)
-                return True
-
-    def assemb_error(self, line, msg):
-        self.display()
-        print(line)
-        print("^^^Error at last line: %s" % msg)
-        exit(-1)
-
-    def check_line_label(self, label, line):
-        if not self.check_label(label):
-            self.assemb_error(line, "Wrong label")
-
-    def assemb(self, asm_file, tui_mode):
-        if tui_mode:
-            self.tui_enable = True
-            if "p" in tui_mode:
-                self.tui_pause = True
-            if "a" in tui_mode:
-                self.code.append(('', '$main', ''))
-                self.code.append(('', 'exit', '~'))
-        label = ""
-        code_lines = read_file(asm_file)
-        for line in code_lines:
-            line = line.strip()
-            if line == "" or line[0] in self.comment_mark:
-                continue
-            _label, sep, ist = line.partition(':')
-            if sep and _label.find('"') == -1 and _label.find("'") == -1:
-                _label, ist = _label.strip(), ist.strip()
-                self.check_line_label(_label, line)
-                label = '%s,%s' % (label, _label) if label else _label
-                if ist == "" or ist[0] in self.comment_mark:
-                    continue
-            elif len(line) >= 7 and line[:7] == 'ENDFUNC':
-                label = '%s,%s' % (label, 'ENDFUNC') if label else 'ENDFUNC'
-                ist = 'ret'
-            else:
-                ist = line
-            dire, sep, arg = ist.partition(' ')
-            if len(dire) > 4 and \
-                (dire[-4:] == '.arg' or dire[-4:] == '.var'):
-                dire = dire[-3:]
-            self.code.append([label, dire, arg.strip()])
-            label = ""
-        self.code.append(('', 'exit', '0'))
-
     def run_error(self, msg="Wrong instruction format"):
         self.code[self.xip][0] = "**%s**" % msg
         self.output.append(msg)
         self.display()
         exit(-1)
 
-    def check_identifier(self, identifier):
-        if not self.is_valid_identifier(identifier):
-            self.run_error("Wrong identifier: %s" % (identifier))
+    def run_check(self, var_table, arg):
+        if not self.is_valid_identifier(arg) or self.table_has_key(var_table, arg):
+            self.run_error("Wrong arg name: %s" % (arg))
 
-    def call(self, func_name):
-        func_entry = None
+    def do_call(self, func_name):
         arg_list = []
-        var_table = {}
+        code_idx = self.func_table[func_name]
+        if self.code[code_idx][1] == "arg":
+            arg_list = self.code[code_idx][2].split(',')
 
-        try:
-            func_entry = self.func_table[func_name]
-        except KeyError:
-            self.run_error("Undefined function")
-
-        if self.code[func_entry][1] == "arg":
-            arg_list = self.code[func_entry][2].split(',')
         stack_size, arg_nums = len(self.stack), len(arg_list)
+        self.stack.append((arg_nums, self.xip, self.var_table))
+        self.xip = code_idx if len(arg_list) else code_idx -1
 
-        for addr, arg in enumerate(arg_list, stack_size - arg_nums):
+        var_table = {}
+        for addr, arg in enumerate(arg_list, stack_size-arg_nums):
             arg = arg.strip()
-            if not self.is_valid_identifier(arg) or self.table_has_key(var_table, arg):
-                self.run_error("Wrong arg name")
+            self.run_check(var_table, arg)
             var_table[arg] = addr
             var_table[addr] = arg
-
-        self.stack.append((arg_nums, self.xip, self.var_table))
         self.var_table = var_table
-        self.xip = func_entry if arg_nums else func_entry -1
-
-    def run(self):
-        self.xip = 0
-        self.stack.clear()
-        while True:
-            if self.tui_enable:
-                self.display()
-            label, dire, arg = self.code[self.xip]
-            if dire[0] == '$':
-                dialect, arg = self.call, dire[1:]
-                self.check_identifier(arg)
-            else:
-                self.check_identifier(dire)
-                try:
-                    dialect = eval("self.do_" + dire)
-                except NameError:
-                    self.run_error("Wrong identifier: %s" % (dire))
-            dialect(arg)
-            self.xip += 1
 
     def do_var(self, arg):
-        if arg == "": return
+        if arg == "":
+            return
         for var in arg.split(','):
             var = var.strip()
-            if not self.is_valid_identifier(var) or self.table_has_key(self.var_table, var):
-                self.run_error("Wrong var name")
+            self.run_check(self.var_table, var)
             self.var_table[var] = len(self.stack)
             self.var_table[len(self.stack)] = var
             self.stack.append("/")
@@ -302,7 +304,6 @@ class simulator(object):
                     self.run_error("Undefined variable")
         else:
             retval = '/'
-
         i = len(self.stack) - 1
         while type(self.stack[i]) is not tuple:
             i -= 1
@@ -336,10 +337,12 @@ class simulator(object):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument("-f", "--file", type=str, help="asm file path")
-    parser.add_argument("-t", "--tui", type=str, default=None, help="tui mode: None(not tui), a(add main), p(pause)")
+    parser.add_argument("-f", "--file", type=str, default=None, help="asm file path")
+    parser.add_argument("-a", "--add_main", type=int, default=0, help="add $main on the top of code")
+    parser.add_argument("-t", "--tui", type=int, default=0, help="tui mode: 0(not tui), 1(tui auto run), 2(tui pause)")
+    parser.add_argument("-v", "--verbose", type=int, default=0, help="verbose")
     args = parser.parse_args()
 
-    sim = simulator()
-    sim.assemb(args.file, args.tui)
-    sim.run()
+    sim = simulator(args.verbose)
+    sim.assemb(args.file, args.add_main)
+    sim.run(args.tui)
